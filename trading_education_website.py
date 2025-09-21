@@ -8,13 +8,27 @@ File: trading_education_website.py
 import streamlit as st
 import asyncio
 import pandas as pd
-import plotly.graph_objects as go
-from plotly.subplots import make_subplots
-import yfinance as yf
 from datetime import datetime, timedelta
 import json
 import time
 import logging
+
+# Try to import plotly with fallback
+try:
+    import plotly.graph_objects as go
+    from plotly.subplots import make_subplots
+    PLOTLY_AVAILABLE = True
+except ImportError:
+    st.error("📊 Plotly is not installed. Please install it with: pip install plotly>=5.17.0")
+    PLOTLY_AVAILABLE = False
+
+# Try to import yfinance with fallback
+try:
+    import yfinance as yf
+    YFINANCE_AVAILABLE = True
+except ImportError:
+    st.error("📈 yfinance is not installed. Please install it with: pip install yfinance>=0.2.28")
+    YFINANCE_AVAILABLE = False
 
 # Import our free AI trading system
 try:
@@ -47,320 +61,87 @@ st.set_page_config(
     }
 )
 
-# Custom CSS for clean white theme
+# Custom CSS for better styling
 st.markdown("""
 <style>
-    /* Main app styling */
-    .stApp {
-        background-color: #ffffff;
-    }
-    
-    .main .block-container {
-        padding-top: 2rem;
-        padding-bottom: 2rem;
-        max-width: 1200px;
-        background-color: #ffffff;
-    }
-    
     .main-header {
-        font-size: 3.2rem;
-        font-weight: 700;
+        font-size: 3rem;
+        font-weight: bold;
         text-align: center;
-        margin-bottom: 2.5rem;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        margin-bottom: 2rem;
+        background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         background-clip: text;
-        letter-spacing: -0.02em;
     }
     
     .disclaimer-box {
-        background-color: #fffbf0;
-        border: 1px solid #f6e05e;
-        border-radius: 12px;
-        padding: 1.5rem;
-        margin: 2rem 0;
-        border-left: 4px solid #ed8936;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-    }
-    
-    .disclaimer-box h3 {
-        color: #744210;
-        margin-top: 0;
-        margin-bottom: 1rem;
-        font-weight: 600;
+        background-color: #fff3cd;
+        border: 1px solid #ffeaa7;
+        border-radius: 10px;
+        padding: 1rem;
+        margin: 1rem 0;
+        border-left: 5px solid #f39c12;
     }
     
     .signal-card {
-        border-radius: 12px;
-        padding: 1.5rem;
-        margin: 1rem 0;
-        border: 1px solid #e2e8f0;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-        background-color: #ffffff;
-        transition: transform 0.2s ease, box-shadow 0.2s ease;
-    }
-    
-    .signal-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+        border-radius: 10px;
+        padding: 1rem;
+        margin: 0.5rem 0;
+        border-left: 5px solid;
     }
     
     .signal-buy {
-        border-left: 4px solid #28a745;
-        background: linear-gradient(135deg, #f0fff4 0%, #ffffff 100%);
+        background-color: #d4edda;
+        border-left-color: #28a745;
     }
     
     .signal-sell {
-        border-left: 4px solid #dc3545;
-        background: linear-gradient(135deg, #fff5f5 0%, #ffffff 100%);
+        background-color: #f8d7da;
+        border-left-color: #dc3545;
     }
     
     .signal-hold {
-        border-left: 4px solid #ffc107;
-        background: linear-gradient(135deg, #fffbf0 0%, #ffffff 100%);
+        background-color: #fff3cd;
+        border-left-color: #ffc107;
     }
     
     .coffee-button {
-        background: linear-gradient(135deg, #ff6b35 0%, #f7931e 100%);
+        background-color: #ff813f;
         color: white;
-        padding: 12px 24px;
+        padding: 10px 20px;
         text-decoration: none;
-        border-radius: 8px;
-        font-weight: 600;
+        border-radius: 5px;
+        font-weight: bold;
         display: inline-block;
-        margin: 15px 0;
+        margin: 10px 0;
         text-align: center;
-        box-shadow: 0 4px 12px rgba(255, 107, 53, 0.3);
-        transition: all 0.3s ease;
-    }
-    
-    .coffee-button:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 16px rgba(255, 107, 53, 0.4);
-        text-decoration: none;
-        color: white;
     }
     
     .agent-card {
-        background-color: #ffffff;
-        border-radius: 12px;
-        padding: 1.25rem;
-        margin: 0.75rem 0;
-        border: 1px solid #e2e8f0;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-        transition: transform 0.2s ease, box-shadow 0.2s ease;
-    }
-    
-    .agent-card:hover {
-        transform: translateY(-1px);
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    }
-    
-    .agent-card h4 {
-        color: #2d3748;
-        margin-top: 0;
-        margin-bottom: 0.75rem;
-        font-weight: 600;
-    }
-    
-    /* Tabs styling */
-    .stTabs [data-baseweb="tab-list"] {
-        gap: 4px;
         background-color: #f8f9fa;
-        padding: 8px;
-        border-radius: 12px;
-        border: 1px solid #e9ecef;
+        border-radius: 10px;
+        padding: 1rem;
+        margin: 0.5rem 0;
+        border: 1px solid #dee2e6;
+    }
+    
+    .metric-container {
+        background-color: #f1f3f4;
+        padding: 1rem;
+        border-radius: 8px;
+        text-align: center;
+        margin: 0.5rem 0;
+    }
+    
+    .stTabs [data-baseweb="tab-list"] {
+        gap: 2px;
     }
     
     .stTabs [data-baseweb="tab"] {
-        height: 48px;
-        padding: 0 20px;
-        border-radius: 8px;
-        color: #495057;
-        font-weight: 500;
-        border: none;
-        background-color: transparent;
-        transition: all 0.2s ease;
-    }
-    
-    .stTabs [data-baseweb="tab"]:hover {
-        background-color: #e9ecef;
-        color: #212529;
-    }
-    
-    .stTabs [data-baseweb="tab"][aria-selected="true"] {
-        background-color: #ffffff;
-        color: #212529;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-        font-weight: 600;
-    }
-    
-    /* Sidebar styling */
-    .css-1d391kg {
-        background-color: #f8f9fa;
-        border-right: 1px solid #dee2e6;
-    }
-    
-    /* Button styling */
-    .stButton > button {
-        border-radius: 8px;
-        border: 1px solid #dee2e6;
-        background-color: #ffffff;
-        color: #495057;
-        font-weight: 500;
-        padding: 0.75rem 1.5rem;
-        transition: all 0.2s ease;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-    }
-    
-    .stButton > button:hover {
-        background-color: #f8f9fa;
-        border-color: #adb5bd;
-        transform: translateY(-1px);
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    }
-    
-    .stButton > button[kind="primary"] {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        border: none;
-        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
-    }
-    
-    .stButton > button[kind="primary"]:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
-    }
-    
-    /* Text styling */
-    h1, h2, h3, h4, h5, h6 {
-        color: #212529;
-        font-weight: 600;
-    }
-    
-    p, div, span, li {
-        color: #495057;
-        line-height: 1.6;
-    }
-    
-    /* Metrics styling */
-    [data-testid="metric-container"] {
-        background-color: #ffffff;
-        border: 1px solid #e9ecef;
-        border-radius: 12px;
-        padding: 1.25rem;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-        transition: transform 0.2s ease;
-    }
-    
-    [data-testid="metric-container"]:hover {
-        transform: translateY(-1px);
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    }
-    
-    [data-testid="metric-container"] > div {
-        color: #212529;
-    }
-    
-    /* Status messages */
-    .stSuccess {
-        background-color: #f0fff4;
-        border: 1px solid #9ae6b4;
-        border-radius: 8px;
-        color: #276749;
-        padding: 1rem;
-    }
-    
-    .stError {
-        background-color: #fff5f5;
-        border: 1px solid #feb2b2;
-        border-radius: 8px;
-        color: #c53030;
-        padding: 1rem;
-    }
-    
-    .stWarning {
-        background-color: #fffbf0;
-        border: 1px solid #f6e05e;
-        border-radius: 8px;
-        color: #744210;
-        padding: 1rem;
-    }
-    
-    .stInfo {
-        background-color: #ebf8ff;
-        border: 1px solid #90cdf4;
-        border-radius: 8px;
-        color: #2c5282;
-        padding: 1rem;
-    }
-    
-    /* Input fields */
-    .stTextInput > div > div > input {
-        border-radius: 8px;
-        border: 1px solid #dee2e6;
-        color: #495057;
-        background-color: #ffffff;
-        padding: 0.75rem;
-    }
-    
-    .stSelectbox > div > div {
-        border-radius: 8px;
-        border: 1px solid #dee2e6;
-        background-color: #ffffff;
-    }
-    
-    /* Progress bar */
-    .stProgress > div > div > div > div {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        border-radius: 4px;
-    }
-    
-    /* Expanders */
-    .streamlit-expanderHeader {
-        background-color: #f8f9fa;
-        border-radius: 8px;
-        border: 1px solid #dee2e6;
-        color: #495057;
-        font-weight: 500;
-        padding: 1rem;
-    }
-    
-    /* Code blocks */
-    .stCodeBlock {
-        border-radius: 8px;
-        border: 1px solid #e9ecef;
-        background-color: #f8f9fa;
-    }
-    
-    /* Custom containers */
-    .feature-card {
-        background-color: #ffffff;
-        border-radius: 12px;
-        padding: 1.5rem;
-        margin: 1rem 0;
-        border: 1px solid #e9ecef;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-        transition: transform 0.2s ease, box-shadow 0.2s ease;
-    }
-    
-    .feature-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
-    }
-    
-    /* Remove default margins and add consistent spacing */
-    .element-container {
-        margin-bottom: 1rem;
-    }
-    
-    /* Sidebar headers */
-    .css-1d391kg h2, .css-1d391kg h3 {
-        color: #212529;
-        border-bottom: 2px solid #e9ecef;
-        padding-bottom: 0.5rem;
-        margin-bottom: 1rem;
+        height: 50px;
+        padding-left: 20px;
+        padding-right: 20px;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -388,6 +169,10 @@ def run_async(coro):
 @st.cache_data(ttl=300)  # Cache for 5 minutes
 def create_price_chart(symbol, period="3mo"):
     """Create interactive price chart with technical indicators"""
+    if not PLOTLY_AVAILABLE or not YFINANCE_AVAILABLE:
+        st.warning("📊 Chart functionality requires plotly and yfinance to be installed.")
+        return None, None
+        
     try:
         ticker = yf.Ticker(symbol)
         data = ticker.history(period=period)
@@ -552,12 +337,12 @@ def main():
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
         st.markdown("""
-        <div class="feature-card" style="text-align: center;">
-            <p style="font-size: 1.1rem; margin-bottom: 1rem;">💡 If this educational tool helps you learn about AI and trading:</p>
+        <div style="text-align: center; margin: 20px 0;">
+            <p>💡 If this educational tool helps you learn about AI and trading:</p>
             <a href="https://www.buymeacoffee.com/yourusername" target="_blank" class="coffee-button">
                 ☕ Buy me a coffee
             </a>
-            <p style="margin-top: 1rem;"><small>Help keep this educational platform free and updated!</small></p>
+            <p><small>Help keep this educational platform free and updated!</small></p>
         </div>
         """, unsafe_allow_html=True)
     
@@ -627,14 +412,17 @@ def main():
             st.warning("⚠️ Ollama: Not available")
         
         # Check market data
-        try:
-            test_data = yf.Ticker("AAPL").history(period="1d")
-            if not test_data.empty:
-                st.success("✅ Market Data: Available")
-            else:
-                st.error("❌ Market Data: No data")
-        except:
-            st.error("❌ Market Data: Connection failed")
+        if YFINANCE_AVAILABLE:
+            try:
+                test_data = yf.Ticker("AAPL").history(period="1d")
+                if not test_data.empty:
+                    st.success("✅ Market Data: Available")
+                else:
+                    st.error("❌ Market Data: No data")
+            except:
+                st.error("❌ Market Data: Connection failed")
+        else:
+            st.error("❌ Market Data: yfinance not installed")
     
     # Main content area
     tab1, tab2, tab3, tab4 = st.tabs(["📊 Stock Analysis", "📚 How It Works", "🎓 Learning Center", "💡 About AI Trading"])
@@ -950,27 +738,30 @@ def main():
             st.subheader("🧮 Interactive RSI Calculator")
             
             if st.button("Calculate RSI for Current Symbol"):
-                try:
-                    data = yf.Ticker(symbol).history(period="1mo")
-                    if not data.empty:
-                        delta = data['Close'].diff()
-                        gain = (delta.where(delta > 0, 0)).rolling(14).mean()
-                        loss = (-delta.where(delta < 0, 0)).rolling(14).mean()
-                        rs = gain / loss
-                        rsi = (100 - (100 / (1 + rs))).iloc[-1]
-                        
-                        st.metric(f"{symbol} RSI (14-day)", f"{rsi:.1f}")
-                        
-                        if rsi > 70:
-                            st.warning("⚠️ Potentially overbought - consider waiting for pullback")
-                        elif rsi < 30:
-                            st.success("✅ Potentially oversold - may be buying opportunity")
+                if not YFINANCE_AVAILABLE:
+                    st.error("📈 yfinance is required for RSI calculation")
+                else:
+                    try:
+                        data = yf.Ticker(symbol).history(period="1mo")
+                        if not data.empty:
+                            delta = data['Close'].diff()
+                            gain = (delta.where(delta > 0, 0)).rolling(14).mean()
+                            loss = (-delta.where(delta < 0, 0)).rolling(14).mean()
+                            rs = gain / loss
+                            rsi = (100 - (100 / (1 + rs))).iloc[-1]
+                            
+                            st.metric(f"{symbol} RSI (14-day)", f"{rsi:.1f}")
+                            
+                            if rsi > 70:
+                                st.warning("⚠️ Potentially overbought - consider waiting for pullback")
+                            elif rsi < 30:
+                                st.success("✅ Potentially oversold - may be buying opportunity")
+                            else:
+                                st.info("ℹ️ RSI in neutral zone")
                         else:
-                            st.info("ℹ️ RSI in neutral zone")
-                    else:
-                        st.error("Could not fetch data")
-                except Exception as e:
-                    st.error(f"Could not calculate RSI: {e}")
+                            st.error("Could not fetch data")
+                    except Exception as e:
+                        st.error(f"Could not calculate RSI: {e}")
         
         with edu_tab3:
             st.subheader("🤖 AI in Trading Education")
@@ -1065,28 +856,28 @@ def main():
         
         st.subheader("🤝 Support the Project")
         st.markdown("""
-        <div class="feature-card" style="text-align: center;">
-            <h3 style="color: #212529; margin-bottom: 1.5rem;">☕ Keep This Educational Tool Free</h3>
-            <p style="font-size: 1.1rem; margin-bottom: 1.5rem;">This platform is completely free for educational use. If it helps you learn about AI and trading:</p>
+        <div style="background-color: #f0f2f6; padding: 20px; border-radius: 10px; text-align: center;">
+            <h3>☕ Keep This Educational Tool Free</h3>
+            <p>This platform is completely free for educational use. If it helps you learn about AI and trading:</p>
             <a href="https://www.buymeacoffee.com/yourusername" target="_blank" class="coffee-button">
                 ☕ Buy me a coffee - $5
             </a>
-            <p style="margin: 1.5rem 0;"><small>Help cover hosting costs and support continued development of free educational tools!</small></p>
+            <p><small>Help cover hosting costs and support continued development of free educational tools!</small></p>
             
-            <hr style="border: none; border-top: 1px solid #e9ecef; margin: 2rem 0;">
+            <hr>
             
-            <h4 style="color: #495057; margin-bottom: 1rem;">📬 Connect & Learn More</h4>
-            <p style="margin-bottom: 1.5rem;">
-                <a href="https://github.com/yourusername/ai-trading-education" target="_blank" style="color: #667eea; text-decoration: none; margin: 0 0.5rem;">GitHub Repository</a> | 
-                <a href="https://twitter.com/yourusername" target="_blank" style="color: #667eea; text-decoration: none; margin: 0 0.5rem;">Twitter Updates</a> | 
-                <a href="mailto:your.email@example.com" style="color: #667eea; text-decoration: none; margin: 0 0.5rem;">Contact</a>
+            <h4>📬 Connect & Learn More</h4>
+            <p>
+                <a href="https://github.com/yourusername/ai-trading-education" target="_blank">GitHub Repository</a> | 
+                <a href="https://twitter.com/yourusername" target="_blank">Twitter Updates</a> | 
+                <a href="mailto:your.email@example.com">Contact</a>
             </p>
             
-            <h4 style="color: #495057; margin-bottom: 1rem;">🔗 Other Free Resources</h4>
+            <h4>🔗 Other Free Resources</h4>
             <p>
-                <a href="https://www.investopedia.com" target="_blank" style="color: #667eea; text-decoration: none; margin: 0 0.5rem;">Investopedia</a> | 
-                <a href="https://www.tradingview.com" target="_blank" style="color: #667eea; text-decoration: none; margin: 0 0.5rem;">TradingView</a> | 
-                <a href="https://finance.yahoo.com" target="_blank" style="color: #667eea; text-decoration: none; margin: 0 0.5rem;">Yahoo Finance</a>
+                <a href="https://www.investopedia.com" target="_blank">Investopedia</a> | 
+                <a href="https://www.tradingview.com" target="_blank">TradingView</a> | 
+                <a href="https://finance.yahoo.com" target="_blank">Yahoo Finance</a>
             </p>
         </div>
         """, unsafe_allow_html=True)
