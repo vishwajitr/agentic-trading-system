@@ -82,6 +82,7 @@ st.markdown("""
         padding: 1rem;
         margin: 1rem 0;
         border-left: 5px solid #f39c12;
+        color: #495057;
     }
     
     .signal-card {
@@ -89,6 +90,7 @@ st.markdown("""
         padding: 1rem;
         margin: 0.5rem 0;
         border-left: 5px solid;
+        color: #495057;
     }
     
     .signal-buy {
@@ -124,6 +126,7 @@ st.markdown("""
         padding: 1rem;
         margin: 0.5rem 0;
         border: 1px solid #dee2e6;
+        color: #495057;
     }
     
     .metric-container {
@@ -904,8 +907,7 @@ def main():
     <div style="text-align: center; color: #666; margin-top: 2rem;">
         <p>🤖 AI Trading Education Hub | Built for Learning | Not Financial Advice</p>
         <p><small>Made with ❤️ for the trading and AI community | 
-        <a href="https://github.com/yourusername/ai-trading-education" target="_blank">Open Source</a> | 
-        <a href="https://www.buymeacoffee.com/yourusername" target="_blank">☕ Support</a></small></p>
+        <a href="https://buymeacoffee.com/vishwajit" target="_blank">☕ Support</a></small></p>
     </div>
     """, unsafe_allow_html=True)
 
