@@ -48,8 +48,8 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded",
     menu_items={
-        'Get Help': 'https://github.com/yourusername/ai-trading-education',
-        'Report a bug': 'https://github.com/yourusername/ai-trading-education/issues',
+        'Get Help': 'https://github.com/vishwajitr/ai-trading-education',
+        'Report a bug': 'https://github.com/vishwajitr/ai-trading-education/issues',
         'About': """
         # AI Trading Education Platform
         
@@ -342,7 +342,7 @@ def main():
         st.markdown("""
         <div style="text-align: center; margin: 20px 0;">
             <p>💡 If this educational tool helps you learn about AI and trading:</p>
-            <a href="https://www.buymeacoffee.com/yourusername" target="_blank" class="coffee-button">
+            <a href="https://www.buymeacoffee.com/vishwajitr" target="_blank" class="coffee-button">
                 ☕ Buy me a coffee
             </a>
             <p><small>Help keep this educational platform free and updated!</small></p>
@@ -862,7 +862,7 @@ def main():
         <div style="background-color: #f0f2f6; padding: 20px; border-radius: 10px; text-align: center;">
             <h3>☕ Keep This Educational Tool Free</h3>
             <p>This platform is completely free for educational use. If it helps you learn about AI and trading:</p>
-            <a href="https://www.buymeacoffee.com/yourusername" target="_blank" class="coffee-button">
+            <a href="https://www.buymeacoffee.com/vishwajitr" target="_blank" class="coffee-button">
                 ☕ Buy me a coffee - $5
             </a>
             <p><small>Help cover hosting costs and support continued development of free educational tools!</small></p>
@@ -871,7 +871,7 @@ def main():
             
             <h4>📬 Connect & Learn More</h4>
             <p>
-                <a href="https://github.com/yourusername/ai-trading-education" target="_blank">GitHub Repository</a> | 
+                <a href="https://github.com/vishwajitr/ai-trading-education" target="_blank">GitHub Repository</a> | 
                 <a href="https://twitter.com/yourusername" target="_blank">Twitter Updates</a> | 
                 <a href="mailto:your.email@example.com">Contact</a>
             </p>
