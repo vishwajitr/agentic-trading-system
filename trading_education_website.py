@@ -109,7 +109,7 @@ st.markdown("""
     }
     
     .coffee-button {
-        background-color: #ff813f;
+        background-color: #ffffff;
         color: white;
         padding: 10px 20px;
         text-decoration: none;
